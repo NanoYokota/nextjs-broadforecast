@@ -1,20 +1,26 @@
 import Head from 'next/head'
 import styles from '@/styles/Home.module.css'
-import React from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import axios from 'axios';
 
 // 関数コンポーネント
 export default function Home() {
-  const [ cityName, setCityName ] = React.useState( "" );
-  const [ url, setUrl ] = React.useState( "" );
-  const [ responseCode, setResponseCode ] = React.useState( null );
-  const [ weather, setWeather ] = React.useState( "" );
-  const [ error, setError ] = React.useState( "" );
+  const [ cityName, setCityName ] = useState( "福岡" );
+  const [ url, setUrl ] = useState( "" );
+  const [ responseCode, setResponseCode ] = useState( null );
+  const [ weather, setWeather ] = useState( "" );
+  const [ error, setError ] = useState( "" );
+  const API_KEY = process.env.NEXT_PUBLIC_WEATHER_API_KEY;
+  const input = useRef( null );
+  console.log( "input.current ↓" );
+  console.log( input.current );
+
+  const buildUrl = city => {
+    return `https://api.openweathermap.org/data/2.5/weather?q=${ city }&units=metric&appid=${ API_KEY }&lang=ja`;
+  };
 
   const handleInput = ( event ) => {
     const city = event.target.value;
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${ city }&units=metric&appid=${ process.env.NEXT_PUBLIC_WEATHER_API_KEY }&lang=ja`;
-    setUrl( url );
     setCityName( city );
   }
 
@@ -26,6 +32,7 @@ export default function Home() {
         setResponseCode( resCode );
         setWeather( weather );
         setError( "" );
+        input.current.disabled = true;
       } )
       .catch( err => {
         console.log( err );
@@ -34,6 +41,18 @@ export default function Home() {
         setError( err.message );
       } );
   }
+
+  const enableInput = () => {
+    if ( !input.current.disabled ) {
+      return;
+    }
+    input.current.disabled = false;
+  }
+
+  useEffect( () => {
+    const url = buildUrl( cityName );
+    setUrl( url );
+  } );
 
   return (
     <>
@@ -46,7 +65,7 @@ export default function Home() {
       <main>
         <h1>今日の天気を調べてみよう！</h1>
         <form>
-          <input name="city" onChange={ handleInput } value={ cityName } />
+          <input name="city" onChange={ handleInput } value={ cityName } ref={ input } onClick={ enableInput } />
           <p>地域：{ cityName }</p>
           <p>URL：{ url }</p>
           <button type="button" onClick={ fetchWeather }>Check weather!</button>
